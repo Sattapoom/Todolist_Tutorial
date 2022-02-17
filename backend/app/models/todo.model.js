@@ -8,6 +8,10 @@ module.exports = (sequelize, Sequelize) => {
         },
         finished: {
             type: Sequelize.BOOLEAN
+        },
+        favor: {
+            type: Sequelize.BOOLEAN,
+            defaultValue:false
         }
     });
 

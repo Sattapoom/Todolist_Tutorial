@@ -1,7 +1,7 @@
 const db = require("../models");
 const todo_list = db.todo_list;
 const Op = db.Sequelize.Op;
-
+const sequelize = require("sequelize");
 exports.create = (req, res) => {
     if (!req.body.title) {
         res.status(400).send({
@@ -30,13 +30,30 @@ exports.create = (req, res) => {
 
 exports.findAll = (req, res) => {
     const title = req.query.title;
-    var condition = title ? { title: { [Op.like]: `%${title}%` } } : null;
-
-    todo_list.findAll({ where: condition })
-        .then(data => {
-            res.send(data);
-        })
-        .catch(err => {
+    var data_tmp = [];
+    let condition1 = { title: { [Op.like]: `%${title}%` },favor:{[Op.like]:'1'} }
+    if(title==null){
+    	condition1 = {favor:{[Op.like]:'1'} }
+    }
+    let condition2 = { title: { [Op.like]: `%${title}%` },favor:{[Op.like]:'0'} }
+    if(title==null){
+    	condition2 = {favor:{[Op.like]:'0'} }
+    }
+    todo_list.findAll({ where: condition1,order:sequelize.literal('updatedAt ASC') })
+    .then(data=>{
+    
+	    data_tmp=data
+	    todo_list.findAll({ where: condition2,order:sequelize.literal('updatedAt ASC') })
+	    .then(data2 =>{
+	    	res.send(data_tmp.concat(data2));
+	    }).catch(err => {
+		    res.status(500).send({
+		        message:
+		            err.message || "Some error occurred while retrieving Todo."
+		    });
+		});					
+    
+    }).catch(err => {
             res.status(500).send({
                 message:
                     err.message || "Some error occurred while retrieving Todo."
@@ -63,8 +80,9 @@ exports.findOne = (req, res) => {
 
 exports.update = (req, res) => {
     const id = req.params.id;
-
-    todo_list.update(req.body, {
+    let favor_at_state=false;
+    let body = req.body;
+    todo_list.update(body, {
         where: { id: id }
     })
         .then(num => {

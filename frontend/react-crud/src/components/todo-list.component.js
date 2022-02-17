@@ -11,6 +11,8 @@ export default class TodoList extends Component{
         this.setActiveTodo = this.setActiveTodo.bind(this);
         this.removeAllTodo = this.removeAllTodo.bind(this);
         this.searchTitle = this.searchTitle.bind(this);
+        this.shiningStar = require('../images/shining-star.png')
+        this.noneShiningStar = require('../images/none-shining-star.png')
         this.state ={
             todo:[],
             currentTodo: null,
@@ -81,6 +83,26 @@ export default class TodoList extends Component{
             console.log(e);
         });
     }
+
+    setFavorite(Todo,status){
+        var data = {
+            id: Todo.id,
+            title: Todo.title,
+            description: Todo.description,
+            finished: Todo.finished,
+            favor: status
+        };
+
+        TodoListDataService.update(Todo.id, data)
+        .then(response => {
+            console.log(response.data);
+            this.refreshList();
+        })
+        .catch(e => {
+            console.log(e);
+        });
+    }
+
     render(){
         const {searchTitle,todo,currentIndex,currentTodo} = this.state;
         return(
@@ -111,13 +133,13 @@ export default class TodoList extends Component{
                         {todo &&
                             todo.map((Todo,index)=>(
                                <li
-                                className={"list-group-item"+
+                                className={"list-group-item "+
                                 (index === currentIndex ? "active":"")
                                 }
                                 onClick={()=> this.setActiveTodo(Todo,index)}
                                 key={index}
                                 >
-                                   {Todo.title}
+                                   {<img src={(Todo.favor === true ? this.shiningStar:this.noneShiningStar)} alt="Star" width='15px' height='15px'/>}{Todo.title}
                                </li> 
                             ))}
                     </ul>
@@ -152,12 +174,19 @@ export default class TodoList extends Component{
                                 {currentTodo.finished ? "Finished": "Pending"}
                             </div>
                             <Link
-                             to={"/todo/"+currentTodo.id}
-                             className="badge badge-warning"
-                             style={{color: "black"}}
+                            to={"/todo/"+currentTodo.id}
+                            className="badge badge-primary mr-2"
                             >
                             Edit
                             </Link>
+                            <button                    
+                                type="button"
+                                className={(currentTodo.favor === true ? "badge badge-outline-warning":"badge badge-warning")}
+                                id='favoritebutton'
+                                onClick={()=> this.setFavorite(currentTodo,(currentTodo.favor ? false:true))}
+                            >
+                                {(currentTodo.favor ? "unfavorite":"favorite")}
+                            </button>
                         </div>
 
                     ) :(
